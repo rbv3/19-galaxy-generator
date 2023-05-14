@@ -14,15 +14,69 @@ const canvas = document.querySelector('canvas.webgl')
 // Scene
 const scene = new THREE.Scene()
 
-/**
- * Test cube
- */
-const cube = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshBasicMaterial()
-)
-scene.add(cube)
+/*
+Galaxy
+*/
+const parameters = {
+    count: 1000,
+    radius: 5,
+    size: 0.02,
+    branches: 3,
+    spin: 1
+};
 
+let geometry = null;
+let material = null;
+let points = null;
+
+const generateGalaxy = () => {
+    if(points != null) {
+        geometry.dispose();
+        material.dispose();
+        scene.remove(points)
+    }
+    // geometry
+    geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(parameters.count * 3)
+
+    for(let i=0; i<parameters.count; i++) {
+        const i3 = i*3;
+        const radius = Math.random() * parameters.radius;
+        const spingAngle = radius * parameters.spin;
+        const branchAngle = ((i % parameters.branches) / parameters.branches) * Math.PI * 2;
+
+        positions[i3] = Math.cos(branchAngle + spingAngle) * radius;
+        positions[i3+1] = 0;
+        positions[i3+2] = Math.sin(branchAngle + spingAngle) * radius;
+    }
+    geometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(positions, 3)
+    );
+
+    // material
+    material = new THREE.PointsMaterial({
+        size: parameters.size,
+        sizeAttenuation: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+    });
+
+    // points
+    points = new THREE.Points(geometry, material);
+    scene.add(points);
+}
+generateGalaxy();
+
+
+/*
+Gui Updates
+*/
+gui.add(parameters, 'count').min(100).max(100000).step(100).onFinishChange(generateGalaxy);
+gui.add(parameters, 'radius').min(1).max(10).step(1).onFinishChange(generateGalaxy);
+gui.add(parameters, 'size').min(0.01).max(0.1).step(0.001).onFinishChange(generateGalaxy);
+gui.add(parameters, 'branches').min(2).max(20).step(1).onFinishChange(generateGalaxy);
+gui.add(parameters, 'spin').min(-5).max(5).step(0.01).onFinishChange(generateGalaxy);
 /**
  * Sizes
  */
